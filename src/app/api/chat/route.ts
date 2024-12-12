@@ -1,10 +1,8 @@
-// src/app/api/chat/route.ts
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-// Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || ''  // Added fallback for type safety
+  apiKey: process.env.OPENAI_API_KEY || ''
 });
 
 export async function POST(request: Request) {

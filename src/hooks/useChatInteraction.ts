@@ -1,4 +1,3 @@
-// src/hooks/useChatInteraction.ts
 import { useState } from 'react';
 import { ChatMessage } from '@/types/chat';
 
@@ -55,7 +54,6 @@ export function useChatInteraction() {
       console.error('Chat Error:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
       
-      // Add error message to chat
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
         content: "Sorry, I encountered an error. Please try again.",

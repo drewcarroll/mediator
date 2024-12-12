@@ -1,4 +1,3 @@
-// src/components/ChatResponse.tsx
 import { ChatMessage } from '@/types/chat';
 
 interface ChatResponseProps {
