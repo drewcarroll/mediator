@@ -1,4 +1,5 @@
 import { ChatMessage } from '@/types/chat';
+import styles from './ChatResponse.module.css';
 
 interface ChatResponseProps {
   message: ChatMessage;
@@ -6,21 +7,11 @@ interface ChatResponseProps {
 
 export function ChatResponse({ message }: ChatResponseProps) {
   return (
-    <div
-      className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} mb-4`}
-    >
-      <div
-        className={`max-w-[80%] p-4 rounded-lg ${
-          message.isUser
-            ? 'bg-blue-500 text-white rounded-br-none'
-            : 'bg-gray-100 text-gray-800 rounded-bl-none'
-        }`}
-      >
-        <p className="text-sm">{message.content}</p>
-        <span className="text-xs opacity-70 mt-1 block">
-          {new Date(message.timestamp).toLocaleTimeString()}
-        </span>
-      </div>
+    <div className={styles.message}>
+      <p className={styles.content}>{message.content}</p>
+      <span className={styles.timestamp}>
+        {new Date(message.timestamp).toLocaleTimeString()}
+      </span>
     </div>
   );
 }

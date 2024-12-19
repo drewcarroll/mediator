@@ -1,0 +1,47 @@
+.form {
+    display: flex;
+    gap: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid #90CDF4;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: white;
+    transition: border-color 0.2s ease;
+    color: black;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #4299E1;
+}
+
+.input:disabled {
+    background-color: #EDF2F7;
+    cursor: not-allowed;
+}
+
+.button {
+    padding: 0.75rem 1.5rem;
+    background-color: #4299E1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.button:hover:not(:disabled) {
+    background-color: #2B6CB0;
+}
+
+.button:disabled {
+    background-color: #90CDF4;
+    cursor: not-allowed;
+}

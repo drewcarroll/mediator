@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './ChatInput.module.css';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -17,27 +18,22 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   };
 
   return (
-    <form 
-      onSubmit={handleSubmit} 
-      className="fixed bottom-0 left-0 right-0 p-4 bg-white shadow-md flex"
+    <form
+      className={styles.form}
+      onSubmit={handleSubmit}
     >
       <input
+        className={styles.input}
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Ask me anything..."
         disabled={isLoading}
-        className="flex-grow p-2 border rounded-l-lg 
-                   focus:outline-none focus:ring-2 focus:ring-blue-500
-                   disabled:opacity-50"
       />
-      <button 
-        type="submit" 
+      <button
+        className={styles.button}
+        type="submit"
         disabled={isLoading || input.trim() === ''}
-        className="bg-blue-500 text-white p-2 rounded-r-lg 
-                   hover:bg-blue-600 
-                   disabled:bg-blue-300 
-                   transition-colors duration-200"
       >
         {isLoading ? 'Sending...' : 'Send'}
       </button>
