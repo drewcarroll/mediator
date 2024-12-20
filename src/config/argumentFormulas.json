@@ -1,0 +1,41 @@
+{
+    "PERSON_A_MEAN_TO_B": {
+        "name": "Person A Mean to Person B",
+        "questions": {
+            "WAS_THERE_INTENT": {
+                "basePrompt": "Ask if the behavior was intentionally mean",
+                "expectedAnswer": "YES/NO",
+                "responses": {
+                    "YES": {
+                        "nextQuestion": "WHY_MEAN",
+                        "promptContext": "They believe the meanness was intentional"
+                    },
+                    "NO": {
+                        "nextQuestion": "NO_NEGATIVE_INTENT",
+                        "promptContext": "They believe there was no intentional meanness"
+                    }
+                }
+            },
+            "WHY_MEAN": {
+                "basePrompt": "Ask about their understanding of the other person's motivations",
+                "expectedAnswer": "OPEN",
+                "responses": {
+                    "*": {
+                        "nextQuestion": "FREQUENCY_CHECK",
+                        "promptContext": "Exploring reasons behind intentional negative behavior"
+                    }
+                }
+            },
+            "NO_NEGATIVE_INTENT": {
+                "basePrompt": "Explore potential misunderstandings in the interaction",
+                "expectedAnswer": "OPEN",
+                "responses": {
+                    "*": {
+                        "nextQuestion": "EXPLORE_MISUNDERSTANDING",
+                        "promptContext": "Looking into possible communication issues"
+                    }
+                }
+            }
+        }
+    }
+}

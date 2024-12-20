@@ -1,12 +1,14 @@
 // This file manages the entire chat state and interaction logic
-
 import { useState } from 'react';
 import { ChatMessage } from '@/types/chat';
+import { useConversationState } from './useConversationState';
 
 export function useChatInteraction() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { state, moveToNextStep } = useConversationState();
 
   // Called whenever user sends a message
   const sendMessage = async (prompt: string) => {
@@ -34,7 +36,8 @@ export function useChatInteraction() {
         },
         body: JSON.stringify({
           message: prompt,
-          conversationHistory: messages
+          conversationHistory: messages,
+          conversationState: state
         }),
       });
       const data = await response.json();
@@ -50,6 +53,7 @@ export function useChatInteraction() {
       };
       // Add AI message to chat
       setMessages(prev => [...prev, aiMessage]);
+      moveToNextStep(data.message);
     } catch (err) {
       console.error('Chat Error:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
@@ -70,6 +74,7 @@ export function useChatInteraction() {
     messages,
     sendMessage,
     isLoading,
-    error
+    error,
+    conversationState: state // ******* REVIEW THIS STUFF ------ WHAT IS CONVERSATION STATE? *******
   };
 }

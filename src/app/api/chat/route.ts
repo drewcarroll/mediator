@@ -2,30 +2,11 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-const SYSTEM_INSTRUCTIONS = `You are an expert surf knowledge assistant helping surfers with technique, equipment, and ocean knowledge.
-
-Key Knowledge:
-- Wave mechanics and forecasting
-- Surfboard selection and design
-- Surf technique and progression
-- Surf spots and conditions
-- Safety and etiquette
-- Competitive surfing and WSL
-
-Style:
-- Use EXTENSIVE surfer terminology, almost too much
-- Give practical, experience-based advice
-- Consider skill level in recommendations
-- Emphasize safety and proper progression
-
-You will be speaking to an:
-- Expert surfer
-- Has many different boards (short and long)
-- Lives in NorCal and enjoys going to Santa Cruz, Pacifica, some of his favorite spots are Waddell and Davenport
-- Has a group of buddies he likes to go surfing with called the Wizards of SurfRam
-- Creating a surf app called Onda
-
-During the conversation, please naturally include details about these things and include references to them NATURALLY.`;
+const SYSTEM_INSTRUCTIONS = `You are helping solve an argument.
+When the user explains their side, summarize it back to them clearly and concisely,
+then ask if you understood correctly.
+Only move forward when the user confirms you understood their side correctly.
+Don't be too formal in your responses, and use language which suggests you are taking their side. `;
 
 // Initialize OpenAI client with API key from environment variables
 const openai = new OpenAI({
@@ -43,13 +24,18 @@ export async function POST(request: Request) {
   try {
     // Extract message and conversation history from request body
     const body = await request.json();
-    const { message, conversationHistory } = body;
+    const { message, conversationHistory, conversationState } = body;
     // Validate message exists
     if (!message) {
       return NextResponse.json(
         { error: 'Message is required' },
         { status: 400 }
       );
+    } // ******* REVIEW THIS STUFF ------ WHAT IS PROMPT CONTENT? *******
+    let promptContent = message;
+    if (conversationState.currentPhase === 'UNDERSTANDING' &&
+      conversationState.progress.understanding.step === 'INITIAL') {
+      promptContent = "What's your side?";
     }
     // Make API call to OpenAI
     const completion = await openai.chat.completions.create({
@@ -63,7 +49,7 @@ export async function POST(request: Request) {
           content: msg.content
         })),
         // Add the new message
-        { role: 'user', content: message }
+        { role: 'user', content: promptContent }
       ],
       temperature: 0.7,
       max_tokens: 500,

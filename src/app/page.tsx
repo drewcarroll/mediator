@@ -1,8 +1,8 @@
 'use client';
 
 import { useChatInteraction } from '@/hooks/useChatInteraction';
-import { ChatInput } from '@/components/ChatInput';
-import { ChatResponse } from '@/components/ChatResponse';
+import { ChatInput } from '@/components/ChatInput/ChatInput';
+import { ChatResponse } from '@/components/ChatResponse/ChatResponse';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.title}>All-Knowing Surf Expert</h1>
+        <h1 className={styles.title}>PROBLEM SOLVER</h1>
       </header>
 
       <main className={styles.main}>
