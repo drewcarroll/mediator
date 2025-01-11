@@ -69,6 +69,14 @@ export function useChatInteraction(side: 'left' | 'right') {
         throw new Error(data.error || 'Failed to get response');
       }
 
+      if (currentContext.state === ConversationState.UNDERSTANDING &&
+        data.message.includes('Got it!')) {
+        const otherSideComplete = completion[side === 'left' ? 'right' : 'left'];
+        data.message = otherSideComplete
+          ? "Got it! Coming up with a resolution..."
+          : "Got it! Waiting for the other person to finish...";
+      }
+
       const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
         content: data.message,
@@ -80,7 +88,7 @@ export function useChatInteraction(side: 'left' | 'right') {
       addMessage(aiMessage);
 
       if (currentContext.state === ConversationState.UNDERSTANDING &&
-        data.message.includes('Got it! Waiting for the other person to finish...')) {
+        data.message.includes('Got it!')) {
         setCompletion(side, true);
       }
     } catch (err) {

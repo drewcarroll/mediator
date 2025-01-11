@@ -123,7 +123,9 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
               systemInstructions: `Based on this person's perspective of the conflict: "${statement}", provide a single 
               paragraph of specific, actionable advice for what this person can do to help resolve the conflict. Focus
                on what this specific person can do, not what the other person should do. Important: Be VERY SPECIFIC TO 
-               THE SCENARIO. Use SPECIFIC DETAILS pertaining to what each side is thinking feeling and how to resolve. `
+               THE SCENARIO. Use SPECIFIC DETAILS pertaining to what each side is thinking feeling and how to resolve. 
+               Almost use TOO MANY specific details about the scenario. In your resolution to this person, use wording
+               that seems to take their side, but say what needs to be done in order to resolve the conflict.`
             }),
           });
 
@@ -159,10 +161,6 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
             side: 'right'
           }
         ],
-        completion: {
-          left: false,
-          right: false
-        }
       }));
     }
   }
