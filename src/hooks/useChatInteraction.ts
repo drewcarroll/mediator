@@ -25,7 +25,7 @@ export function useChatInteraction(side: 'left' | 'right') {
     if (messages.length === 0) {
       addMessage({
         id: `ai-${Date.now()}`,
-        content: "What's seems to be the issue?",
+        content: "What seems to be the issue?",
         isUser: false,
         timestamp: new Date(),
         side
