@@ -22,6 +22,11 @@ export type SystemPrompt = {
   messageTransformer?: (messages: ChatMessage[]) => ChatMessage[];
 };
 
+export interface SideCompletion {
+  left: boolean;
+  right: boolean;
+}
+
 export const SYSTEM_PROMPTS: Record<ConversationState, SystemPrompt> = {
   [ConversationState.UNDERSTANDING]: {
     instructions: `You are helping someone understand the root of their conflict. Respond naturally but follow this, 2-part structure:
@@ -49,9 +54,9 @@ export const SYSTEM_PROMPTS: Record<ConversationState, SystemPrompt> = {
 
       If they do NOT confirm, keep asking questions to try to get it to where they confirm. Don't use the same exact wording as you did before.
       
-      ONLY after they confirm, respond with "Got it." and ONLY "Got it." If you say "Got it." nothing else can follow.
+      ONLY after they confirm, respond with "Got it! Waiting for the other person to finish..." and ONLY "Got it." If you say "Got it! Waiting for the other person to finish..." nothing else can follow.
 
-      It is VERY IMPORTANT that you get all the details of the conflict before you say Got it, because it will end the conversation and you will not be able to go back and get more.
+      It is VERY IMPORTANT that you get all the details of the conflict before you say "Got it! Waiting for the other person to finish...", because it will end the conversation and you will not be able to go back and get more.
       So, you must fully get these details: what happened, what emotion is being felt, and the reason/impact! Once you feel you have all of these, move on!`
   },
   [ConversationState.CLASSIFICATION]: {

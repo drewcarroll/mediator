@@ -8,10 +8,11 @@ export function useChatInteraction(side: 'left' | 'right') {
     contexts,
     isLoading,
     error,
+    completion,
     addMessage,
     setLoading,
     setError,
-    transitionToNextState
+    setCompletion
   } = useConversationStore();
 
   const messages = allMessages.filter(msg => msg.side === side);
@@ -77,9 +78,8 @@ export function useChatInteraction(side: 'left' | 'right') {
 
       addMessage(aiMessage);
 
-      if (currentContext.state === ConversationState.UNDERSTANDING &&
-        data.message.includes('Got it.')) {
-        transitionToNextState(side);
+      if (currentContext.state === ConversationState.UNDERSTANDING && data.message.includes('Got it.')) {
+        setCompletion(side, true);
       }
 
     } catch (err) {
@@ -103,6 +103,8 @@ export function useChatInteraction(side: 'left' | 'right') {
     sendMessage,
     isLoading: currentLoading,
     error: currentError,
-    currentState: currentContext.state
+    currentState: currentContext.state,
+    isComplete: completion[side],
+    otherSideComplete: completion[side === 'left' ? 'right' : 'left']
   };
 }

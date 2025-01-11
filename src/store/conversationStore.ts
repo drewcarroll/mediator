@@ -1,19 +1,23 @@
 import { create } from 'zustand';
 import { ChatMessage, ConversationState, ConversationContext, SYSTEM_PROMPTS } from '@/types/chat';
 
+type ChatSide = 'left' | 'right';
+
 interface ConversationStore {
   messages: ChatMessage[];
-  contexts: Record<'left' | 'right', ConversationContext>;
-  isLoading: Record<'left' | 'right', boolean>;
-  error: Record<'left' | 'right', string | null>;
+  contexts: Record<ChatSide, ConversationContext>;
+  isLoading: Record<ChatSide, boolean>;
+  error: Record<ChatSide, string | null>;
+  completion: Record<ChatSide, boolean>;
 
   setMessages: (messages: ChatMessage[]) => void;
   addMessage: (message: ChatMessage) => void;
-  updateContext: (side: 'left' | 'right', newContext: Partial<ConversationContext>) => void;
-  setLoading: (side: 'left' | 'right', loading: boolean) => void;
-  setError: (side: 'left' | 'right', error: string | null) => void;
-  transitionToNextState: (side: 'left' | 'right') => void;
-  resetConversation: (side: 'left' | 'right') => void;
+  updateContext: (side: ChatSide, newContext: Partial<ConversationContext>) => void;
+  setLoading: (side: ChatSide, loading: boolean) => void;
+  setError: (side: ChatSide, error: string | null) => void;
+  setCompletion: (side: ChatSide, isComplete: boolean) => void;
+  checkAndTransition: () => void;
+  resetConversation: (side: ChatSide) => void;
 }
 
 const INITIAL_STATE: ConversationContext = {
@@ -33,6 +37,10 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
   error: {
     left: null,
     right: null
+  },
+  completion: {
+    left: false,
+    right: false
   },
 
   setMessages: (messages) => set({ messages }),
@@ -62,34 +70,59 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
     }
   })),
 
-  transitionToNextState: (side) => {
-    const { contexts, messages } = get();
-    const currentContext = contexts[side];
-
-    const transitions: Partial<Record<ConversationState, ConversationState>> = {
-      [ConversationState.UNDERSTANDING]: ConversationState.CLASSIFICATION,
-    };
-
-    const nextState = transitions[currentContext.state];
-    if (!nextState) return;
-
-    const systemPrompt = SYSTEM_PROMPTS[nextState];
-    const sideMessages = messages.filter(msg => msg.side === side);
-
-    const transformedMessages = systemPrompt.messageTransformer
-      ? systemPrompt.messageTransformer(sideMessages)
-      : sideMessages;
-
+  setCompletion: (side, isComplete) => {
     set((state) => ({
-      contexts: {
-        ...state.contexts,
-        [side]: { ...state.contexts[side], state: nextState }
-      },
-      messages: [
-        ...state.messages.filter(msg => msg.side !== side),
-        ...transformedMessages
-      ]
+      completion: {
+        ...state.completion,
+        [side]: isComplete
+      }
     }));
+    // Check if both sides are complete after updating
+    get().checkAndTransition();
+  },
+
+  checkAndTransition: () => {
+    const state = get();
+    const bothComplete = state.completion.left && state.completion.right;
+
+    if (bothComplete) {
+      // Reset completion status
+      set((state) => ({
+        completion: {
+          left: false,
+          right: false
+        }
+      }));
+
+      // Transition both sides
+      (['left', 'right'] as const).forEach((side) => {
+        const currentContext = state.contexts[side];
+        const transitions: Partial<Record<ConversationState, ConversationState>> = {
+          [ConversationState.UNDERSTANDING]: ConversationState.CLASSIFICATION,
+        };
+
+        const nextState = transitions[currentContext.state];
+        if (!nextState) return;
+
+        const systemPrompt = SYSTEM_PROMPTS[nextState];
+        const sideMessages = state.messages.filter(msg => msg.side === side);
+
+        const transformedMessages = systemPrompt.messageTransformer
+          ? systemPrompt.messageTransformer(sideMessages)
+          : sideMessages;
+
+        set((state) => ({
+          contexts: {
+            ...state.contexts,
+            [side]: { ...state.contexts[side], state: nextState }
+          },
+          messages: [
+            ...state.messages.filter(msg => msg.side !== side),
+            ...transformedMessages
+          ]
+        }));
+      });
+    }
   },
 
   resetConversation: (side) => set((state) => ({
@@ -101,6 +134,10 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
     error: {
       ...state.error,
       [side]: null
+    },
+    completion: {
+      ...state.completion,
+      [side]: false
     }
   })),
 }));
