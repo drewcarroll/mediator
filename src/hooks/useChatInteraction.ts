@@ -19,6 +19,7 @@ export function useChatInteraction(side: 'left' | 'right') {
   const currentContext = contexts[side];
   const currentLoading = isLoading[side];
   const currentError = error[side];
+  const isComplete = completion[side];
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -78,10 +79,10 @@ export function useChatInteraction(side: 'left' | 'right') {
 
       addMessage(aiMessage);
 
-      if (currentContext.state === ConversationState.UNDERSTANDING && data.message.includes('Got it.')) {
+      if (currentContext.state === ConversationState.UNDERSTANDING &&
+        data.message.includes('Got it! Waiting for the other person to finish...')) {
         setCompletion(side, true);
       }
-
     } catch (err) {
       console.error('Chat Error:', err);
       setError(side, err instanceof Error ? err.message : 'Failed to send message');
@@ -104,7 +105,6 @@ export function useChatInteraction(side: 'left' | 'right') {
     isLoading: currentLoading,
     error: currentError,
     currentState: currentContext.state,
-    isComplete: completion[side],
-    otherSideComplete: completion[side === 'left' ? 'right' : 'left']
+    isComplete
   };
 }

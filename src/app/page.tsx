@@ -6,7 +6,6 @@ import { ChatResponse } from '@/components/ChatResponse/ChatResponse';
 import styles from './page.module.css';
 
 export default function Home() {
-  // Create two separate chat instances
   const leftChat = useChatInteraction('left');
   const rightChat = useChatInteraction('right');
 
@@ -34,9 +33,11 @@ export default function Home() {
               </div>
             )}
           </div>
-          <div className={styles.inputContainer}>
-            <ChatInput onSendMessage={leftChat.sendMessage} isLoading={leftChat.isLoading} />
-          </div>
+          {!leftChat.isComplete && (
+            <div className={styles.inputContainer}>
+              <ChatInput onSendMessage={leftChat.sendMessage} isLoading={leftChat.isLoading} />
+            </div>
+          )}
         </div>
 
         {/* Right Chat Panel */}
@@ -56,9 +57,11 @@ export default function Home() {
               </div>
             )}
           </div>
-          <div className={styles.inputContainer}>
-            <ChatInput onSendMessage={rightChat.sendMessage} isLoading={rightChat.isLoading} />
-          </div>
+          {!rightChat.isComplete && (
+            <div className={styles.inputContainer}>
+              <ChatInput onSendMessage={rightChat.sendMessage} isLoading={rightChat.isLoading} />
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -81,50 +81,6 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
     get().checkAndTransition();
   },
 
-  checkAndTransition: () => {
-    const state = get();
-    const bothComplete = state.completion.left && state.completion.right;
-
-    if (bothComplete) {
-      // Reset completion status
-      set((state) => ({
-        completion: {
-          left: false,
-          right: false
-        }
-      }));
-
-      // Transition both sides
-      (['left', 'right'] as const).forEach((side) => {
-        const currentContext = state.contexts[side];
-        const transitions: Partial<Record<ConversationState, ConversationState>> = {
-          [ConversationState.UNDERSTANDING]: ConversationState.CLASSIFICATION,
-        };
-
-        const nextState = transitions[currentContext.state];
-        if (!nextState) return;
-
-        const systemPrompt = SYSTEM_PROMPTS[nextState];
-        const sideMessages = state.messages.filter(msg => msg.side === side);
-
-        const transformedMessages = systemPrompt.messageTransformer
-          ? systemPrompt.messageTransformer(sideMessages)
-          : sideMessages;
-
-        set((state) => ({
-          contexts: {
-            ...state.contexts,
-            [side]: { ...state.contexts[side], state: nextState }
-          },
-          messages: [
-            ...state.messages.filter(msg => msg.side !== side),
-            ...transformedMessages
-          ]
-        }));
-      });
-    }
-  },
-
   resetConversation: (side) => set((state) => ({
     messages: state.messages.filter(msg => msg.side !== side),
     contexts: {
@@ -140,4 +96,74 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
       [side]: false
     }
   })),
+
+  checkAndTransition: async () => {
+    const state = get();
+    const bothComplete = state.completion.left && state.completion.right;
+
+    if (bothComplete) {
+      // Get the final confirmed statements for both sides
+      const leftStatement = state.messages
+        .filter(msg => msg.side === 'left' && !msg.isUser)
+        .slice(-2)[0]?.content;
+      const rightStatement = state.messages
+        .filter(msg => msg.side === 'right' && !msg.isUser)
+        .slice(-2)[0]?.content;
+
+      // Function to get resolution for a side
+      const getResolution = async (statement: string) => {
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: statement,
+              systemInstructions: `Based on this person's perspective of the conflict: "${statement}", provide a single 
+              paragraph of specific, actionable advice for what this person can do to help resolve the conflict. Focus
+               on what this specific person can do, not what the other person should do. Important: Be VERY SPECIFIC TO 
+               THE SCENARIO. Use SPECIFIC DETAILS pertaining to what each side is thinking feeling and how to resolve. `
+            }),
+          });
+
+          const data = await response.json();
+          return data.message;
+        } catch (error) {
+          console.error('Resolution Error:', error);
+          return 'Unable to generate resolution advice at this time.';
+        }
+      };
+
+      // Get resolutions for both sides
+      const [leftResolution, rightResolution] = await Promise.all([
+        getResolution(leftStatement || ''),
+        getResolution(rightStatement || '')
+      ]);
+
+      // Clear previous messages and add resolution messages
+      set((state) => ({
+        messages: [
+          {
+            id: `resolution-left-${Date.now()}`,
+            content: leftResolution,
+            isUser: false,
+            timestamp: new Date(),
+            side: 'left'
+          },
+          {
+            id: `resolution-right-${Date.now()}`,
+            content: rightResolution,
+            isUser: false,
+            timestamp: new Date(),
+            side: 'right'
+          }
+        ],
+        completion: {
+          left: false,
+          right: false
+        }
+      }));
+    }
+  }
 }));
