@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AI Chat Assistant',
-  description: 'Interact with an AI powered chatbot',
+  title: 'Mediator.ai',
+  description: 'A next.js project!',
 }
 
 export default function RootLayout({

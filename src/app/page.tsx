@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.title}>PROBLEM SOLVER</h1>
+        <h1 className={styles.title}>Mediator.ai</h1>
       </header>
 
       <main className={styles.main}>
