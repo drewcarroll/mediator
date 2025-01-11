@@ -1,13 +1,11 @@
-// This file manages the entire chat state and interaction logic
 import { useEffect } from 'react';
 import { useConversationStore } from '@/store/conversationStore';
-import { SYSTEM_PROMPTS } from '@/types/chat';
+import { SYSTEM_PROMPTS, ConversationState, ChatMessage } from '@/types/chat';
 
-export function useChatInteraction() {
-  // Get all data from our store
+export function useChatInteraction(side: 'left' | 'right') {
   const {
-    messages,
-    context,
+    messages: allMessages,
+    contexts,
     isLoading,
     error,
     addMessage,
@@ -16,38 +14,42 @@ export function useChatInteraction() {
     transitionToNextState
   } = useConversationStore();
 
-  // Add first initial message
+  const messages = allMessages.filter(msg => msg.side === side);
+  const currentContext = contexts[side];
+  const currentLoading = isLoading[side];
+  const currentError = error[side];
+
   useEffect(() => {
     if (messages.length === 0) {
       addMessage({
         id: `ai-${Date.now()}`,
-        content: "What's your side?",
+        content: "What's seems to be the issue?",
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        side
       });
     }
-  }, [messages.length, addMessage]);
+  }, [messages.length, addMessage, side]);
 
-  // Called whenever user sends a message
   const sendMessage = async (prompt: string) => {
-    setError(null);
+    setError(side, null);
     if (!prompt.trim()) {
-      setError("Message cannot be empty");
+      setError(side, "Message cannot be empty");
       return;
     }
 
-    // Create and add user's message
-    const userMessage = {
+    const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       content: prompt,
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
+      side
     };
+
     addMessage(userMessage);
-    setLoading(true);
+    setLoading(side, true);
 
     try {
-      // Send request to our API endpoint
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -56,8 +58,7 @@ export function useChatInteraction() {
         body: JSON.stringify({
           message: prompt,
           conversationHistory: messages,
-          // Get system instructions based on current state
-          systemInstructions: SYSTEM_PROMPTS[context.state].instructions
+          systemInstructions: SYSTEM_PROMPTS[currentContext.state].instructions
         }),
       });
 
@@ -66,42 +67,42 @@ export function useChatInteraction() {
         throw new Error(data.error || 'Failed to get response');
       }
 
-      // Create and add AI's response message
-      const aiMessage = {
+      const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
         content: data.message,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        side
       };
+
       addMessage(aiMessage);
 
-      // Transition to the next state
-      if (context.state === 'understanding' && data.message.includes(('Got it.'))) {
-        transitionToNextState();
+      if (currentContext.state === ConversationState.UNDERSTANDING &&
+        data.message.includes('Got it.')) {
+        transitionToNextState(side);
       }
 
     } catch (err) {
-      // Handle any errors that occurred
       console.error('Chat Error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-      
-      // Add error message to chat
+      setError(side, err instanceof Error ? err.message : 'Failed to send message');
+
       addMessage({
         id: `error-${Date.now()}`,
         content: "Sorry, I encountered an error. Please try again.",
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        side
       });
     } finally {
-      // Always stop loading, whether request succeeded or failed
-      setLoading(false);
+      setLoading(side, false);
     }
   };
+
   return {
     messages,
     sendMessage,
-    isLoading,
-    error,
-    currentState: context.state
+    isLoading: currentLoading,
+    error: currentError,
+    currentState: currentContext.state
   };
 }

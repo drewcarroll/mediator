@@ -1,29 +1,30 @@
-  export type ChatMessage = {
-    id: string;
-    content: string;
-    isUser: boolean;
-    timestamp: Date;
-  };
-  
-  export enum ConversationState {
-    UNDERSTANDING = 'understanding',
-    CLASSIFICATION = 'classification',
-  }
-  
-  export type ConversationContext = {
-    state: ConversationState;
-    userArgument?: string;
-    classification?: string;
-  };
-  
-  export type SystemPrompt = {
-    instructions: string;
-    messageTransformer?: (messages: ChatMessage[]) => ChatMessage[];
-  };
-  
-  export const SYSTEM_PROMPTS: Record<ConversationState, SystemPrompt> = {
-    [ConversationState.UNDERSTANDING]: {
-      instructions: `You are helping someone understand the root of their conflict. Respond naturally but follow this, 2-part structure:
+export type ChatMessage = {
+  id: string;
+  content: string;
+  isUser: boolean;
+  timestamp: Date;
+  side: 'left' | 'right';
+};
+
+export enum ConversationState {
+  UNDERSTANDING = 'understanding',
+  CLASSIFICATION = 'classification',
+}
+
+export type ConversationContext = {
+  state: ConversationState;
+  userArgument?: string;
+  classification?: string;
+};
+
+export type SystemPrompt = {
+  instructions: string;
+  messageTransformer?: (messages: ChatMessage[]) => ChatMessage[];
+};
+
+export const SYSTEM_PROMPTS: Record<ConversationState, SystemPrompt> = {
+  [ConversationState.UNDERSTANDING]: {
+    instructions: `You are helping someone understand the root of their conflict. Respond naturally but follow this, 2-part structure:
 
       1. Listen carefully and try to understand the argument. 
       
@@ -52,18 +53,19 @@
 
       It is VERY IMPORTANT that you get all the details of the conflict before you say Got it, because it will end the conversation and you will not be able to go back and get more.
       So, you must fully get these details: what happened, what emotion is being felt, and the reason/impact! Once you feel you have all of these, move on!`
-    },
-    [ConversationState.CLASSIFICATION]: {
-        instructions: "Based on the user's argument, classify the type of issue and provide reasoning.",
-        messageTransformer: (messages: ChatMessage[]) => {
-            const relevantMessages = messages.slice(0, -2);
-            const lastUserMessage = relevantMessages.filter(msg => !msg.isUser).pop();
-            return [{
-              id: 'context-1',
-              content: `Confirmed AI Statement: ${lastUserMessage?.content || ''}`,
-              isUser: false,
-              timestamp: new Date()
-            }];
-          }
-      }
-  };
+  },
+  [ConversationState.CLASSIFICATION]: {
+    instructions: "Based on the user's argument, classify the type of issue and provide reasoning.",
+    messageTransformer: (messages: ChatMessage[]) => {
+      const relevantMessages = messages.slice(0, -2);
+      const lastUserMessage = relevantMessages.filter(msg => !msg.isUser).pop();
+      return [{
+        id: 'context-1',
+        content: `Confirmed AI Statement: ${lastUserMessage?.content || ''}`,
+        isUser: false,
+        timestamp: new Date(),
+        side: messages[0]?.side || 'left'
+      }];
+    }
+  }
+};

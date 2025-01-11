@@ -21,17 +21,27 @@
 
 .main {
     flex: 1;
-    padding: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
+    display: flex;
+    padding: 0;
     width: 100%;
 }
 
+.chatPanel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 5rem);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
 .messageContainer {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    margin-bottom: 2rem;
 }
 
 .loadingContainer {
@@ -51,10 +61,6 @@
 }
 
 .inputContainer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
     background-color: rgba(255, 255, 255, 0.9);
     padding: 1rem;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
