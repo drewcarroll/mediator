@@ -1,14 +1,32 @@
 // This file manages the entire chat state and interaction logic
-import { useState } from 'react';
-import { ChatMessage } from '@/types/chat';
-import { useConversationState } from './useConversationState';
+import { useEffect } from 'react';
+import { useConversationStore } from '@/store/conversationStore';
+import { SYSTEM_PROMPTS } from '@/types/chat';
 
 export function useChatInteraction() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Get all data from our store
+  const {
+    messages,
+    context,
+    isLoading,
+    error,
+    addMessage,
+    setLoading,
+    setError,
+    transitionToNextState
+  } = useConversationStore();
 
-  const { state, moveToNextStep } = useConversationState();
+  // Add first initial message
+  useEffect(() => {
+    if (messages.length === 0) {
+      addMessage({
+        id: `ai-${Date.now()}`,
+        content: "What's your side?",
+        isUser: false,
+        timestamp: new Date()
+      });
+    }
+  }, [messages.length, addMessage]);
 
   // Called whenever user sends a message
   const sendMessage = async (prompt: string) => {
@@ -17,18 +35,19 @@ export function useChatInteraction() {
       setError("Message cannot be empty");
       return;
     }
-    // Create user message object
-    const userMessage: ChatMessage = {
+
+    // Create and add user's message
+    const userMessage = {
       id: `user-${Date.now()}`,
       content: prompt,
       isUser: true,
       timestamp: new Date()
     };
-    // Add user message to chat
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
+    addMessage(userMessage);
+    setLoading(true);
+
     try {
-      // Send request to API
+      // Send request to our API endpoint
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -37,37 +56,45 @@ export function useChatInteraction() {
         body: JSON.stringify({
           message: prompt,
           conversationHistory: messages,
-          conversationState: state
+          // Get system instructions based on current state
+          systemInstructions: SYSTEM_PROMPTS[context.state].instructions
         }),
       });
+
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || 'Failed to get response');
       }
-      // Create AI message object
-      const aiMessage: ChatMessage = {
+
+      // Create and add AI's response message
+      const aiMessage = {
         id: `ai-${Date.now()}`,
         content: data.message,
         isUser: false,
         timestamp: new Date()
       };
-      // Add AI message to chat
-      setMessages(prev => [...prev, aiMessage]);
-      moveToNextStep(data.message);
+      addMessage(aiMessage);
+
+      // Transition to the next state
+      if (context.state === 'understanding' && data.message.includes(('Got it.'))) {
+        transitionToNextState();
+      }
+
     } catch (err) {
+      // Handle any errors that occurred
       console.error('Chat Error:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
-      // Create error message
-      const errorMessage: ChatMessage = {
+      
+      // Add error message to chat
+      addMessage({
         id: `error-${Date.now()}`,
         content: "Sorry, I encountered an error. Please try again.",
         isUser: false,
         timestamp: new Date()
-      };
-      // Add error message to chat
-      setMessages(prev => [...prev, errorMessage]);
+      });
     } finally {
-      setIsLoading(false);
+      // Always stop loading, whether request succeeded or failed
+      setLoading(false);
     }
   };
   return {
@@ -75,6 +102,6 @@ export function useChatInteraction() {
     sendMessage,
     isLoading,
     error,
-    conversationState: state // ******* REVIEW THIS STUFF ------ WHAT IS CONVERSATION STATE? *******
+    currentState: context.state
   };
 }
